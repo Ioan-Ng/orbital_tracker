@@ -15,7 +15,7 @@ def horizontal_spring_ode(t,y,omega):
 omega = 2
 t_span = (0, 10)          
 initial_ys = [10.0, 0.0]    
-sol = solve_ivp(horizontal_spring_ode, t_span, initial_ys, method = "RK45",args=(omega,), t_eval=np.linspace(0, 10, 100))
+sol = solve_ivp(horizontal_spring_ode, t_span, initial_ys, method = "RK45",args=(omega,), t_eval=np.linspace(0, 10, 100)) #generates 100 even spaces between 0 and ten
 print(sol)
 ts = sol.t       
 xs = sol.y[0]    
