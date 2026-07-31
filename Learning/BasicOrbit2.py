@@ -1,8 +1,9 @@
+
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.integrate import ode
+from scipy.integrate import solve_ivp
 from mpl_toolkits.mplot3d import Axes3D
-#this fuctnion is just a tempate for getting the values we need to parse into the ode solver that is part of scipy libary
+
 
 def plot(rs):
     fig = plt.figure(figsize=(18,6))
@@ -54,47 +55,33 @@ def diff_eq(t,y,mu):
 
     return [vx,vy,vz, ax,ay,az]
 
-if __name__ == "__main__":
-    #initial conditions
-    mu = 398600.4418 #km^3/s^2
-    r_mag = 6371 #km
-    v_mag = np.sqrt(mu/r_mag) #km/s
-
-    #initial position and velocity vectors
-    r0 = [r_mag+2000, 0, 0] #initial position
-    v0 = [0,v_mag,0] #initial velocity
 
 
-    time_span = 1*24*60*60 #seconds
-    dt = 1 #time step in seconds
+#initial conditions
+mu = 398600.4418 #km^3/s^2
+r_mag = 6371 #km
+v_mag = np.sqrt(mu/r_mag) #km/s
+
+#initial position and velocity vectors
+r0 = [r_mag+2000, 0, 0] #initial position
+v0 = [0,v_mag,0] #initial velocity
 
 
-    #number of steps
-    n_steps = int(np.ceil(time_span/dt))
-    
-    #initalise our arrays
-    ys = np.zeros((n_steps, 6)) #pre allocate memory for efficiency 
-    ts = np.zeros((n_steps,1))
+time_span = (0,1*24*60*60) #seconds
 
-    #intialise
-    y0 = r0 + v0
-    ys[0] = np.array(y0)
-    step = 1 # since step = 0 is our inital values
+y0 = r0 + v0
 
-    solver = ode(diff_eq)
-    solver.set_integrator('lsoda')
-    solver.set_initial_value(y0,0)
-    solver.set_f_params(mu) #extra fucntion parameters that don't rely on the previous results, ie constants
+sol = solve_ivp(diff_eq, time_span, y0, method = "DOP853",args=(mu,), t_eval=np.linspace(0, 1*24*60*60, 1000000)) 
+print(sol)
+ts = sol.t       
+xs = sol.y[0]    
+ys = sol.y[1]
+zs = sol.y[2]
 
+rs = np.vstack((xs,ys,zs)).T
 
-    while solver.successful() and step<n_steps:
-        solver.integrate(solver.t + dt)
-        ts[step] = solver.t
-        ys[step] = solver.y
-        step += 1
-        
-    rs = ys[:,:]
-    print(rs)
-    
-    plot(rs)
-
+plt.plot(ts,xs, "r")
+plt.ylabel("displacement")
+plt.xlabel("time")
+plt.show()
+plot(rs)
