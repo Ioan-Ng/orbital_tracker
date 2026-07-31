@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import ode
 from mpl_toolkits.mplot3d import Axes3D
 #this fuctnion is just a tempate for getting the values we need to parse into the ode solver that is part of scipy libary
-
+#from a yt series orbital mechanics by alfonso gonzalez, this is following his work
 def plot(rs):
     fig = plt.figure(figsize=(18,6))
     ax = fig.add_subplot(111, projection = "3d")
