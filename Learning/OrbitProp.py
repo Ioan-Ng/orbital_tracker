@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 import planet_data as pd
 from mpl_toolkits.mplot3d import Axes3D
-
+import tools as tools 
 class OrbitPropagator:
     def __init__(self, r0, v0, t_span, cb):
         self.r0 = r0

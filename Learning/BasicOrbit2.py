@@ -56,7 +56,6 @@ def diff_eq(t,y,mu):
     return [vx,vy,vz, ax,ay,az]
 
 
-
 #initial conditions
 mu = 398600.4418 #km^3/s^2
 r_mag = 6371 #km
