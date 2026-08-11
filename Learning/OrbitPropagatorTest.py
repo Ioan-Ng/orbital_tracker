@@ -14,17 +14,26 @@ if __name__ == "__main__":
 
     r0A = [r_magA*1.1, 0, 0] #initial position
     v0A = [0,v_magA,0] #initial velocity
-    t_span = (0,1*24*60*60)#seconds
+    t_span = (0,2*24*60*60)#seconds
 
-    r_magB =cb["radius"]
-    v_magB = np.sqrt(cb["mu"]/r_magB)
-    r0B = [r_magB*1.5, 0, r_magB*1.5] #initial position
-    v0B = [0,v_magB*0.8,0]
+    r_magB =cb["radius"]+1000
+    v_magB = np.sqrt(cb["mu"]/r_magB)*1.35
+    r0B = [r_magB, 0, 0] #initial position
+    v0B = [0,v_magB,0.4]
     
+    r_magC = cb["radius"]
+    v_magC = np.sqrt(cb["mu"]/r_magC)
+
+    r0C = [r_magC*1.2, 120, 0] #initial position
+    v0C = [0,v_magC*0.9,v_magC*0.9] #initial velocity
+
     opA = OP(r0A, v0A, t_span, cb)
     opA.propagate_orbit()
 
     opB = OP(r0B,v0B,t_span,cb)
     opB.propagate_orbit()
-    labels = ["A","B"]
-    tools.plot([opA.rs,opB.rs],labels)
+
+    opC = OP(r0C, v0C, t_span,cb)
+    opC.propagate_orbit()
+    labels = ["A","B","C"]
+    tools.plot([opA.rs,opB.rs,opC.rs],labels)
