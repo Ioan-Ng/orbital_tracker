@@ -39,11 +39,15 @@ class OrbitPropagator:
         ax.plot([self.rs[len(self.rs)-1, 0]], [self.rs[len(self.rs)-1, 1]], [self.rs[len(self.rs)-1, 2]], "go", label="Final Position")
 
         #plot the central body, the sphere plotting fucntion from https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector
-        u, v = np.mgrid[0:2*np.pi:20j, 0:np.pi:10j]
-        x = self.cb['radius']*np.cos(u)*np.sin(v)
-        y = self.cb['radius']*np.sin(u)*np.sin(v)
-        z = self.cb['radius']*np.cos(v)
-        ax.plot_surface(x, y, z, color="r")
+        #changed it to something i found on the matplot lib documentat
+
+        u = np.linspace(0, 2 * np.pi, 100)
+        v = np.linspace(0, np.pi, 100)
+        x = self.cb['radius'] * np.outer(np.cos(u), np.sin(v))
+        y = self.cb['radius'] * np.outer(np.sin(u), np.sin(v))
+        z = self.cb['radius'] * np.outer(np.ones(np.size(u)), np.cos(v))
+        ax.plot_surface(x, y, z)
+
 
         #plot the x y z axis
         l = self.cb['radius']*2
