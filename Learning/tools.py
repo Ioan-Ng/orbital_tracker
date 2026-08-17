@@ -53,3 +53,14 @@ def plot(rs,labels,show_plot = True, save_plot = False, Title ="Multiple Orbits"
             plt.show()
         if save_plot:
             plt.savefig(title+ ".png",dpi = 300)
+
+def coesToRV(coes, deg = False, mu):
+    
+    if deg:
+        a,e,i,ta,aop,raan = coes #major axis, eccentricity, inclincation, true anaomoly, argument of periapsis , right ascension of the acsending node,
+        i = np.degrees(i)
+        ta = np.degrees(ta)
+        aop = np.degrees(aop)
+        raan = np.degrees(raan)
+    else:
+        a,e,i,ta,aop,raan = coes

@@ -5,9 +5,14 @@ import planet_data as pd
 from mpl_toolkits.mplot3d import Axes3D
 import tools as tools 
 class OrbitPropagator:
-    def __init__(self, r0, v0, t_span, cb):
-        self.r0 = r0
-        self.v0 = v0
+    def __init__(self, state0, t_span,coes = False, cb):
+        if coes:
+            self.r0,self.v0 = tools.coesToRV(r0,v0,mu = cd["mu"])
+        else:
+            self.r0 = state0[:3]
+            self.v0 = state0[3:]
+        
+        
         self.t_span = t_span
         self.cb = cb
         
