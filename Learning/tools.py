@@ -1,9 +1,10 @@
 import numpy as np
+import math as m
 import matplotlib.pyplot as plt
 import planet_data as pd
 from mpl_toolkits.mplot3d import Axes3D
 
-def plot(rs,labels,show_plot = True, save_plot = False, Title ="Multiple Orbits",cb = pd.sun):
+def plot(rs,labels,show_plot = True, save_plot = False, Title ="Multiple Orbits",cb = pd.earth):
         fig = plt.figure(figsize=(18,6))
         ax = fig.add_subplot(111, projection = "3d")
         max = 0 
@@ -54,7 +55,7 @@ def plot(rs,labels,show_plot = True, save_plot = False, Title ="Multiple Orbits"
         if save_plot:
             plt.savefig(title+ ".png",dpi = 300)
 
-def coesToRV(coes, deg = False, mu):
+def coesToRV(coes, deg = False, mu = pd.earth["mu"]):
     
     if deg:
         a,e,i,ta,aop,raan = coes #major axis, eccentricity, inclincation, true anaomoly, argument of periapsis , right ascension of the acsending node,
@@ -64,3 +65,42 @@ def coesToRV(coes, deg = False, mu):
         raan = np.degrees(raan)
     else:
         a,e,i,ta,aop,raan = coes
+    E = ecc_anomaly([ta,e], "tae")
+
+    r_norm = a*(1-e**2)/(1+e*np.cos(ta))
+
+    r_perif = r_norm*np.array([m.cos(ta),m.sin(ta),0])
+    v_perif = m.sqrt(mu*a)/r_norm*np.array([-m.sin(E),m.cos(E)*m.sqrt(1-e**2),0])
+
+
+    perif2eci = np.transpose(eci2perif(raan,aop,i))
+    r = np.dot(perif2eci,r_perif)
+    v = np.dot(perif2eci,v_perif)
+
+    return r,v
+
+def ecc_anomaly(arr,method, tol = 1e-8):
+    if method == "newton":
+        Me,e = arr
+        if Me< np.pi/2: E0 = Me+e/2
+        else: E0 = Me-e
+        for n in range(400):
+            ratio(E0-e*np.sin(E0)-Me)/(1-e*np.cos(E0))
+            if abs(ratio) < tol:
+                if n == 0: return E0
+                else: return E1
+            else:
+                E1 = E0-ratio
+                E0=E1
+        return False
+    elif method == "tae":
+        ta,e = arr
+        return 2*m.atan(np.sqrt((1-e)/1+e))*m.tan(ta/2)
+    else:
+        print("invalid")
+
+def eci2perif(raan, aop, i):
+    row0 = [-m.sin(raan)*m.cos(i)*m.sin(aop) + m.cos(raan)*m.cos(aop),m.cos(raan)*m.cos(i)*m.sin(aop)+m.sin(raan)*m.cos(aop),m.sin(i)*m.sin(aop)]
+    row1 = [-m.sin(raan)*m.cos(i)*m.cos(aop) - m.cos(raan)*m.sin(aop),m.cos(raan)*m.cos(i)*m.cos(aop)-m.sin(raan)*m.sin(aop),m.sin(i)*m.cos(aop)]
+    row2 = [m.sin(raan)*m.sin(i), -m.cos(raan)*m.sin(i),m.cos(i)]
+    return np.array([row0,row1,row2])

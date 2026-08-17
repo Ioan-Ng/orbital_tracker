@@ -1,6 +1,6 @@
-sun = {
-    'name' : 'sun',
-    'mass' : 1.989e30,
-    'mu' : 1.32712e11,
-    'radius' : 695700
+earth = {
+    'name' : 'earth',
+    'mass' : 5.97e24,
+    'mu' : 3.986e5,
+    'radius' : 6378
 }
