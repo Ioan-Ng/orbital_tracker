@@ -5,6 +5,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import planet_data as pd
 from sys import path
 import tools as tools
+import pyvista as pv
+
 from OrbitProp import OrbitPropagator as OP
 cb = pd.earth
 

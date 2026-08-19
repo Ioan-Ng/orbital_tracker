@@ -3,58 +3,83 @@ import math as m
 import matplotlib.pyplot as plt
 import planet_data as pd
 from mpl_toolkits.mplot3d import Axes3D
+import pyvista as pv
 
-def plot(rs,labels,show_plot = True, save_plot = False, Title ="Multiple Orbits",cb = pd.earth):
-        fig = plt.figure(figsize=(18,6))
-        ax = fig.add_subplot(111, projection = "3d")
-        max = 0 
-        #plot trajectory
-        n  = 0 
-        for r in rs:
-            ax.plot(r[:,0], r[:,1], r[:,2], "r", label = labels[n],color='red', linewidth=2.5, zorder=10, clip_on=False) #the w is the colour, white
-            n += 1
-            ax.plot([r[0, 0]], [r[0, 1]], [r[0, 2]], "wo", label="Initial Position")
-            ax.plot([r[len(r)-1, 0]], [r[len(r)-1, 1]], [r[len(r)-1, 2]], "go", label="Final    Position")
-            max_val = np.max(np.abs(r))
-            if max_val >= max:
-                max = max_val
-        #plot the central body, the sphere plotting fucntion from https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector
-        u = np.linspace(0, 2 * np.pi, 100)
-        v = np.linspace(0, np.pi, 100)
-        x = cb['radius'] * np.outer(np.cos(u), np.sin(v))
-        y = cb['radius'] * np.outer(np.sin(u), np.sin(v))
-        z = cb['radius'] * np.outer(np.ones(np.size(u)), np.cos(v))
-        # Force the orbit line to always render above the planet regardless of camera view
-        # Transparent sphere option
-        ax.plot_surface(x, y, z, color='blue', alpha=0.5, zorder=1)
+def plot(
+    rs,
+    labels,
+    show_plot=True,
+    save_plot=False,
+    Title="Multiple Orbits",
+    cb=pd.earth,
+):
+    plotter = pv.Plotter()
 
-  
-        #plot the x y z axis
-        l = cb['radius']*2
-        
-        x,y,z = [[0,0,0],[0,0,0],[0,0,0]]
-        u,v,w = [[1,0,0],[0,1,0],[0,0,1]] #just making the arrows one unit
-        ax.quiver(x,y,z,u,v,w, color = "r", zorder = 4) #u,v,w is where the arrows of x y z end
-        
-        ax.set_xlim([-max,max])
-        ax.set_ylim([-max,max])
-        ax.set_zlim([-max,max])
+    # 1. Central Body
+    sphere = pv.Sphere(radius=cb["radius"], center=(0, 0, 0))
+    plotter.add_mesh(
+        sphere, color="blue", opacity=0.5, label="Central Body", show_edges=False
+    )
 
-        ax.set_xlabel(["X (km)"])
-        ax.set_ylabel(["Y (km)"])
-        ax.set_zlabel(["Z (km)"])
+    max_val = cb["radius"]
 
-        ax.set_aspect("equal")
-        ax.set_title(Title)
+    # 2. Plot Trajectories
+    for n, r in enumerate(rs):
+        points = np.asarray(r, dtype=np.float64)
 
+        # FIXED: Use pv.MultipleLines to connect continuous points
+        trajectory = pv.MultipleLines(points)
 
-        plt.legend()
-        
-        if show_plot:
-            plt.show()
-        if save_plot:
-            plt.savefig(title+ ".png",dpi = 300)
+        # Plot line
+        plotter.add_mesh(
+            trajectory,
+            color="red",
+            line_width=3,
+            label=labels[n] if n < len(labels) else f"Orbit {n+1}",
+        )
 
+        # Initial Position
+        start_pt = pv.PolyData(points[0:1])
+        plotter.add_mesh(
+            start_pt,
+            color="white",
+            point_size=12,
+            render_points_as_spheres=True,
+            label="Initial Position" if n == 0 else None,
+        )
+
+        # Final Position
+        end_pt = pv.PolyData(points[-1:])
+        plotter.add_mesh(
+            end_pt,
+            color="green",
+            point_size=12,
+            render_points_as_spheres=True,
+            label="Final Position" if n == 0 else None,
+        )
+
+        curr_max = np.max(np.abs(points))
+        if curr_max > max_val:
+            max_val = curr_max
+
+    # 3. Setup Scene
+    plotter.add_axes_at_origin()
+    plotter.add_title(Title)
+    plotter.show_grid(
+        xtitle="X (km)",
+        ytitle="Y (km)",
+        ztitle="Z (km)",
+        bounds=[-max_val, max_val, -max_val, max_val, -max_val, max_val],
+    )
+    plotter.add_legend()
+
+    if save_plot:
+        plotter.screenshot(f"{Title}.png")
+
+    if show_plot:
+        plotter.show()
+    else:
+        plotter.close()
 def coesToRV(coes, deg = False, mu = pd.earth["mu"]):
     
     if deg:
