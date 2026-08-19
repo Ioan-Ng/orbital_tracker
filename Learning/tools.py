@@ -19,22 +19,30 @@ def plot(
     # 1. Central Body
     sphere = pv.Sphere(radius=cb["radius"], center=(0, 0, 0))
     plotter.add_mesh(
-        sphere, color="blue", opacity=0.5, label="Central Body", show_edges=False
+        sphere, color="blue", opacity=.4, label="Central Body", show_edges=False
     )
 
     max_val = cb["radius"]
 
     # 2. Plot Trajectories
+    colors = [
+    "red", "blue", "green", "orange", "yellow", "purple", "brown", "pink",
+    "cyan", "magenta", "lime", "teal", "indigo", "violet", "gold", 
+    "coral", "maroon", "navy", "olive", "turquoise"
+]
+    k = 0
     for n, r in enumerate(rs):
+        
         points = np.asarray(r, dtype=np.float64)
 
         # FIXED: Use pv.MultipleLines to connect continuous points
         trajectory = pv.MultipleLines(points)
 
         # Plot line
+        k += 1
         plotter.add_mesh(
             trajectory,
-            color="red",
+            color=colors[k%20],
             line_width=3,
             label=labels[n] if n < len(labels) else f"Orbit {n+1}",
         )
@@ -72,7 +80,7 @@ def plot(
         ztitle="Z (km)",
         bounds=[-max_val, max_val, -max_val, max_val, -max_val, max_val],
     )
-    plotter.add_legend()
+    plotter.add_legend(size =(0.2,0.4),loc = "upper right")
 
     if save_plot:
         plotter.screenshot(f"{Title}.png")
@@ -96,8 +104,9 @@ def coesToRV(coes, deg = False, mu = pd.earth["mu"]):
     r_norm = a*(1-e**2)/(1+e*np.cos(ta))
 
     r_perif = r_norm*np.array([m.cos(ta),m.sin(ta),0])
-    v_perif = m.sqrt(mu*a)/r_norm*np.array([-m.sin(E),m.cos(E)*m.sqrt(1-e**2),0])
-
+    p = a * (1 - e**2)
+    v_perif = np.sqrt(mu / p) * np.array([-np.sin(ta), e + np.cos(ta), 0])
+   
 
     perif2eci = np.transpose(eci2perif(raan,aop,i))
     r = np.dot(perif2eci,r_perif)
@@ -131,24 +140,38 @@ def eci2perif(raan, aop, i):
     row2 = [m.sin(raan)*m.sin(i), -m.cos(raan)*m.sin(i),m.cos(i)]
     return np.array([row0,row1,row2])
 
-
+def true_anomaly(arr):
+    E,e = arr
+    return 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E/2))
 
 
 def orbitsPropagate(file, cb):
+    rs =[]
+    labels = []
     d2r = 2*np.pi/360
     mu = cb["mu"]
     data = pds.read_csv(file)
     for i in range(len(data)-1):
+        print(i)
         line = data.loc[i]
+        
         mean_motion = line.MEAN_MOTION
         eccentricity = line.ECCENTRICITY
-        i = line.INCLINATION*d2r
+        inc = line.INCLINATION*d2r
         raan = line.RA_OF_ASC_NODE*d2r
         mean_anomaly = line.MEAN_ANOMALY*d2r
         periapsis = line.ARG_OF_PERICENTER*d2r
         epoch = line.EPOCH 
         a = (mu/((2*np.pi*mean_motion)/86400)**2)**(1/3)
-        c  =[cb["radius"] + 414,0.0006189,51.6393,0.0,234.1955,105.6372]
+        t_span = (0,1*24*60*60)
+        
         E = ecc_anomaly([mean_anomaly,eccentricity],"newton")
+        trueAnomaly = true_anomaly([E, eccentricity])
         r = a * (1 - eccentricity * np.cos(E))
-        print(r)
+        
+        c  = [a,eccentricity,inc,trueAnomaly,periapsis,raan]
+        op = OP(c,t_span,coes = True)
+        op.propagate_orbit()
+        rs.append(op.rs)  
+        labels.append(getattr(line, 'OBJECT_NAME', f'Sat {id}'))
+    plot(rs,labels)
