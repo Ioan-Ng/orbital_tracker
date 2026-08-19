@@ -1,6 +1,4 @@
 import numpy as np
-import pyvista as pv
-
 import matplotlib.pyplot as plt
 from scipy.integrate import solve_ivp
 import planet_data as pd
@@ -38,45 +36,48 @@ class OrbitPropagator:
         ax,ay,az = -r*self.cb['mu']/(r_mag**3)
         return[vx,vy,vz,ax,ay,az]#
     
+    def plot(self, show_plot = True, save_plot = False, Title ="Orbit"):
+        fig = plt.figure(figsize=(18,6))
+        ax = fig.add_subplot(111, projection = "3d")
+        
+        #plot trajectory
+        ax.plot(self.rs[:,0], self.rs[:,1], self.rs[:,2], "b", label = "Trajectory") #the w is the colour, white
+        ax.plot([self.rs[0, 0]], [self.rs[0, 1]], [self.rs[0, 2]], "wo", label="Initial Position")
+        ax.plot([self.rs[len(self.rs)-1, 0]], [self.rs[len(self.rs)-1, 1]], [self.rs[len(self.rs)-1, 2]], "go", label="Final Position")
+
+        #plot the central body, the sphere plotting fucntion from https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector
+        #changed it to something i found on the matplot lib documentat
+
+        u = np.linspace(0, 2 * np.pi, 100)
+        v = np.linspace(0, np.pi, 100)
+        x = self.cb['radius'] * np.outer(np.cos(u), np.sin(v))
+        y = self.cb['radius'] * np.outer(np.sin(u), np.sin(v))
+        z = self.cb['radius'] * np.outer(np.ones(np.size(u)), np.cos(v))
+        ax.plot_surface(x, y, z)
 
 
-    def plot(self, show_plot=True, save_plot=False, Title="Orbit"):
-        # Initialize high-performance GPU plotter
-        plotter = pv.Plotter(off_screen=not show_plot)
-        plotter.title = Title
-
-        # 1. Trajectory line mesh
-        trajectory = pv.PolyData(self.rs)
-        # Add scalar array for point order to draw a continuous line path
-        trajectory.lines = np.hstack([[len(self.rs)] + list(range(len(self.rs)))])
-        plotter.add_mesh(trajectory, color="blue", line_width=3, label="Trajectory")
-
-        # 2. Initial and Final Position Markers
-        plotter.add_points(np.array([self.rs[0]]), color="white", point_size=12, render_points_as_spheres=True, label="Initial! Position")
-        plotter.add_points(np.array([self.rs[-1]]), color="green", point_size=12, render_points_as_spheres=True, label="Final Position")
-
-        # 3. Central Body (GPU-rendered parametric sphere)
-        central_body = pv.Sphere(radius=self.cb['radius'], center=(0, 0, 0), theta_resolution=60, phi_resolution=60)
-        plotter.add_mesh(central_body, color="cornflowerblue", show_edges=False, smooth_shading=True)
-
-        # 4. Coordinate Axes (Replaces ax.quiver with clean 3D arrows)
-        axis_length = self.cb['radius'] * 2.0
-        plotter.add_axes_at_origin(x_color="red", y_color="green", z_color="blue", line_width=2, labels_off=False)
-
-        # 5. Labels & Visual Environment
-        plotter.add_legend(bcolor=(0.1, 0.1, 0.1, 0.5), face=None)
-        plotter.show_grid(xlabel="X (km)", ylabel="Y (km)", zlabel="Z (km)")
-        plotter.set_background("black")  # Ideal for space/orbital views
-
-        # Equal aspect ratio scaling (built into PyVista by default)
+        #plot the x y z axis
+        l = self.cb['radius']*2
+        
+        x,y,z = [[0,0,0],[0,0,0],[0,0,0]]
+        u,v,w = [[1,0,0],[0,1,0],[0,0,1]] #just making the arrows one unit
+        ax.quiver(x,y,z,u,v,w, color = "b") #u,v,w is where the arrows of x y z end
         max_val = np.max(np.abs(self.rs))
-        plotter.camera.clipping_range = (0.1, max_val * 10)
+        ax.set_xlim([-max_val,max_val])
+        ax.set_ylim([-max_val,max_val])
+        ax.set_zlim([-max_val,max_val])
 
-        # Handle Saving/Displaying
-        if save_plot:
-            plotter.screenshot(f"{Title}.png")
-            
+        ax.set_xlabel(["X (km)"])
+        ax.set_ylabel(["Y (km)"])
+        ax.set_zlabel(["Z (km)"])
+
+        ax.set_aspect("equal")
+        ax.set_title(Title)
+
+
+        plt.legend()
+        
         if show_plot:
-            plotter.show()
-        else:
-            plotter.close()
+            plt.show()
+        if save_plot:
+            plt.savefig(title+ ".png",dpi = 300)

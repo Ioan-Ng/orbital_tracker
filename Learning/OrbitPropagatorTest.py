@@ -39,7 +39,8 @@ if __name__ == "__main__":
     # opC.propagate_orbit()
     # labels = ["A","B","C"]
     # tools.plot([opA.rs,opB.rs,opC.rs],labels)
-    c0  =[cb["radius"] + 414,0.0006189,51.6393,0.0,234.1955,105.6372]
-    op0 = OP(c0, t_span,coes = True)
-    op0.propagate_orbit()
-    tools.plot([op0.rs], "a")
+    # c0  =[cb["radius"] + 414,0.0006189,51.6393,0.0,234.1955,105.6372]
+    # op0 = OP(c0, t_span,coes = True)
+    # op0.propagate_orbit()
+    # tools.plot([op0.rs], "a")
+    tools.orbitsPropagate("SpaceStationData.csv", cb)

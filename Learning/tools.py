@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import planet_data as pd
 from mpl_toolkits.mplot3d import Axes3D
 import pyvista as pv
-
+import pandas as pds
+from OrbitProp import OrbitPropagator as OP
 def plot(
     rs,
     labels,
@@ -110,7 +111,7 @@ def ecc_anomaly(arr,method, tol = 1e-8):
         if Me< np.pi/2: E0 = Me+e/2
         else: E0 = Me-e
         for n in range(400):
-            ratio(E0-e*np.sin(E0)-Me)/(1-e*np.cos(E0))
+            ratio = (E0-e*np.sin(E0)-Me)/(1-e*np.cos(E0))
             if abs(ratio) < tol:
                 if n == 0: return E0
                 else: return E1
@@ -129,3 +130,25 @@ def eci2perif(raan, aop, i):
     row1 = [-m.sin(raan)*m.cos(i)*m.cos(aop) - m.cos(raan)*m.sin(aop),m.cos(raan)*m.cos(i)*m.cos(aop)-m.sin(raan)*m.sin(aop),m.sin(i)*m.cos(aop)]
     row2 = [m.sin(raan)*m.sin(i), -m.cos(raan)*m.sin(i),m.cos(i)]
     return np.array([row0,row1,row2])
+
+
+
+
+def orbitsPropagate(file, cb):
+    d2r = 2*np.pi/360
+    mu = cb["mu"]
+    data = pds.read_csv(file)
+    for i in range(len(data)-1):
+        line = data.loc[i]
+        mean_motion = line.MEAN_MOTION
+        eccentricity = line.ECCENTRICITY
+        i = line.INCLINATION*d2r
+        raan = line.RA_OF_ASC_NODE*d2r
+        mean_anomaly = line.MEAN_ANOMALY*d2r
+        periapsis = line.ARG_OF_PERICENTER*d2r
+        epoch = line.EPOCH 
+        a = (mu/((2*np.pi*mean_motion)/86400)**2)**(1/3)
+        c  =[cb["radius"] + 414,0.0006189,51.6393,0.0,234.1955,105.6372]
+        E = ecc_anomaly([mean_anomaly,eccentricity],"newton")
+        r = a * (1 - eccentricity * np.cos(E))
+        print(r)
