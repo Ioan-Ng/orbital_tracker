@@ -12,15 +12,7 @@ import pyvista as pv
 from pyvista import examples
 
 
-def plot(
-    rs,
-    labels,
-    show_plot=True,
-    save_plot=False,
-    Title="Multiple Orbits",
-    cb={"radius": 6378.137},  # Default Earth radius in km
-    gst_deg=0.0,
-):
+def plot(rs,labels,show_plot=True,save_plot=False,Title="Multiple Orbits",cb={"radius": 6378.137},gst_deg=0.0):
     plotter = pv.Plotter()
 
     # 1. Central Body Setup
@@ -33,31 +25,18 @@ def plot(
     
     # Scale Earth to real physical size
     sphere_with_texture = globe_mesh.scale([scale_factor, scale_factor, scale_factor], inplace=False)
-
+    sphere_with_texture = sphere_with_texture.rotate_z(180, inplace=False)
     # Rotate Earth for Greenwich Sidereal Time (GST)
     if gst_deg != 0.0:
         sphere_with_texture = sphere_with_texture.rotate_z(gst_deg, inplace=False)
-
-    plotter.add_mesh(
-        sphere_with_texture, 
-        texture=earth_texture,
-        opacity=1.0,
-        label="Central Body", 
-        show_edges=False,
-        smooth_shading=True,
-    )
+        
+    plotter.add_mesh(sphere_with_texture,texture=earth_texture,opacity=1.0,label="Central Body",show_edges=False,smooth_shading=True,)
 
     # 2. Add Test Point at (+X Axis / Vernal Equinox)
     # Positions 400km above Prime Meridian / Equator
     test_pt_coords = np.array([[cb["radius"] + 400.0, 0.0, 0.0]])
     test_pt = pv.PolyData(test_pt_coords)
-    plotter.add_mesh(
-        test_pt,
-        color="yellow",
-        point_size=12,
-        render_points_as_spheres=True,
-        label="Test Pt (+X Axis / Greenwich @ GST=0)",
-    )
+    plotter.add_mesh(test_pt,color="yellow",point_size=12,render_points_as_spheres=True,label="Test Pt (+X Axis / Greenwich @ GST=0)",)
 
     # Track bounds for camera
     max_val = cb["radius"] * 1.5  # Guarantees full sphere is never clipped

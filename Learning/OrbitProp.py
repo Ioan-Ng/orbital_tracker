@@ -36,6 +36,7 @@ class OrbitPropagator:
         ax,ay,az = -r*self.cb['mu']/(r_mag**3)
         return[vx,vy,vz,ax,ay,az]#
     
+    
     def plot(self, show_plot = True, save_plot = False, Title ="Orbit"):
         fig = plt.figure(figsize=(18,6))
         ax = fig.add_subplot(111, projection = "3d")
