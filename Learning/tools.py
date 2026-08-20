@@ -6,82 +6,107 @@ from mpl_toolkits.mplot3d import Axes3D
 import pyvista as pv
 import pandas as pds
 from OrbitProp import OrbitPropagator as OP
+from pyvista import examples
+import numpy as np
+import pyvista as pv
+from pyvista import examples
+
+
 def plot(
     rs,
     labels,
     show_plot=True,
     save_plot=False,
     Title="Multiple Orbits",
-    cb=pd.earth,
+    cb={"radius": 6378.137},  # Default Earth radius in km
+    gst_deg=0.0,
 ):
     plotter = pv.Plotter()
 
-    # 1. Central Body
-    sphere = pv.Sphere(radius=cb["radius"], center=(0, 0, 0))
+    # 1. Central Body Setup
+    globe_mesh = examples.planets.load_earth()
+    earth_texture = examples.load_globe_texture()
+
+    # Get max radius of raw globe mesh (bounds are [-1, 1, -1, 1, -1, 1])
+    current_radius = globe_mesh.bounds[1]
+    scale_factor = cb["radius"] / current_radius
+    
+    # Scale Earth to real physical size
+    sphere_with_texture = globe_mesh.scale([scale_factor, scale_factor, scale_factor], inplace=False)
+
+    # Rotate Earth for Greenwich Sidereal Time (GST)
+    if gst_deg != 0.0:
+        sphere_with_texture = sphere_with_texture.rotate_z(gst_deg, inplace=False)
+
     plotter.add_mesh(
-        sphere, color="blue", opacity=.4, label="Central Body", show_edges=False
+        sphere_with_texture, 
+        texture=earth_texture,
+        opacity=1.0,
+        label="Central Body", 
+        show_edges=False,
+        smooth_shading=True,
     )
 
-    max_val = cb["radius"]
+    # 2. Add Test Point at (+X Axis / Vernal Equinox)
+    # Positions 400km above Prime Meridian / Equator
+    test_pt_coords = np.array([[cb["radius"] + 400.0, 0.0, 0.0]])
+    test_pt = pv.PolyData(test_pt_coords)
+    plotter.add_mesh(
+        test_pt,
+        color="yellow",
+        point_size=12,
+        render_points_as_spheres=True,
+        label="Test Pt (+X Axis / Greenwich @ GST=0)",
+    )
 
-    # 2. Plot Trajectories
+    # Track bounds for camera
+    max_val = cb["radius"] * 1.5  # Guarantees full sphere is never clipped
+
+    # 3. Plot Trajectories
     colors = [
-    "red", "blue", "green", "orange", "yellow", "purple", "brown", "pink",
-    "cyan", "magenta", "lime", "teal", "indigo", "violet", "gold", 
-    "coral", "maroon", "navy", "olive", "turquoise"
-]
-    k = 0
+        "red", "blue", "green", "orange", "yellow", "purple", "brown", "pink",
+        "cyan", "magenta", "lime", "teal", "indigo", "violet", "gold"
+    ]
+
     for n, r in enumerate(rs):
-        
         points = np.asarray(r, dtype=np.float64)
 
-        # FIXED: Use pv.MultipleLines to connect continuous points
-        trajectory = pv.MultipleLines(points)
+        if len(points) > 1:
+            trajectory = pv.MultipleLines(points)
+            plotter.add_mesh(
+                trajectory,
+                color=colors[n % len(colors)],
+                line_width=2.0,
+                label=labels[n] if n < len(labels) else f"Orbit {n+1}",
+            )
 
-        # Plot line
-        k += 1
+        # Start/End points
         plotter.add_mesh(
-            trajectory,
-            color=colors[k%20],
-            line_width=3,
-            label=labels[n] if n < len(labels) else f"Orbit {n+1}",
-        )
-
-        # Initial Position
-        start_pt = pv.PolyData(points[0:1])
-        plotter.add_mesh(
-            start_pt,
+            pv.PolyData(points[0:1]),
             color="white",
-            point_size=12,
+            point_size=8,
             render_points_as_spheres=True,
             label="Initial Position" if n == 0 else None,
-        )
-
-        # Final Position
-        end_pt = pv.PolyData(points[-1:])
-        plotter.add_mesh(
-            end_pt,
-            color="green",
-            point_size=12,
-            render_points_as_spheres=True,
-            label="Final Position" if n == 0 else None,
         )
 
         curr_max = np.max(np.abs(points))
         if curr_max > max_val:
             max_val = curr_max
 
-    # 3. Setup Scene
-    plotter.add_axes_at_origin()
+    # 4. Setup Camera & Bounds (Fixes Half-Sphere Clipping)
+    
     plotter.add_title(Title)
+    
+    # Symmetric bounds ensure full sphere and orbit viewing space
     plotter.show_grid(
         xtitle="X (km)",
         ytitle="Y (km)",
         ztitle="Z (km)",
         bounds=[-max_val, max_val, -max_val, max_val, -max_val, max_val],
     )
-    plotter.add_legend(size =(0.2,0.4),loc = "upper right")
-
+    plotter.reset_camera()  # Recalculates frustum so whole model is visible
+    plotter.add_legend(size=(0.25, 0.25), loc="upper right")
+    
     if save_plot:
         plotter.screenshot(f"{Title}.png")
 
@@ -151,8 +176,8 @@ def orbitsPropagate(file, cb):
     d2r = 2*np.pi/360
     mu = cb["mu"]
     data = pds.read_csv(file)
-    for i in range(len(data)-1):
-        print(i)
+    for i in range(len(data)):
+        
         line = data.loc[i]
         
         mean_motion = line.MEAN_MOTION
@@ -172,6 +197,9 @@ def orbitsPropagate(file, cb):
         c  = [a,eccentricity,inc,trueAnomaly,periapsis,raan]
         op = OP(c,t_span,coes = True)
         op.propagate_orbit()
+
         rs.append(op.rs)  
-        labels.append(getattr(line, 'OBJECT_NAME', f'Sat {id}'))
+        if i == 2:
+            print(rs)
+        labels.append(line.OBJECT_NAME)
     plot(rs,labels)
