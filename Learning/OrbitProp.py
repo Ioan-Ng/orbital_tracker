@@ -32,53 +32,7 @@ class OrbitPropagator:
 
         r = np.array([rx,ry,rz])
         r_mag = np.linalg.norm(r)
-
         ax,ay,az = -r*self.cb['mu']/(r_mag**3)
         return[vx,vy,vz,ax,ay,az]#
     
     
-    def plot(self, show_plot = True, save_plot = False, Title ="Orbit"):
-        fig = plt.figure(figsize=(18,6))
-        ax = fig.add_subplot(111, projection = "3d")
-        
-        #plot trajectory
-        ax.plot(self.rs[:,0], self.rs[:,1], self.rs[:,2], "b", label = "Trajectory") #the w is the colour, white
-        ax.plot([self.rs[0, 0]], [self.rs[0, 1]], [self.rs[0, 2]], "wo", label="Initial Position")
-        ax.plot([self.rs[len(self.rs)-1, 0]], [self.rs[len(self.rs)-1, 1]], [self.rs[len(self.rs)-1, 2]], "go", label="Final Position")
-
-        #plot the central body, the sphere plotting fucntion from https://stackoverflow.com/questions/11140163/plotting-a-3d-cube-a-sphere-and-a-vector
-        #changed it to something i found on the matplot lib documentat
-
-        u = np.linspace(0, 2 * np.pi, 100)
-        v = np.linspace(0, np.pi, 100)
-        x = self.cb['radius'] * np.outer(np.cos(u), np.sin(v))
-        y = self.cb['radius'] * np.outer(np.sin(u), np.sin(v))
-        z = self.cb['radius'] * np.outer(np.ones(np.size(u)), np.cos(v))
-        ax.plot_surface(x, y, z)
-
-
-        #plot the x y z axis
-        l = self.cb['radius']*2
-        
-        x,y,z = [[0,0,0],[0,0,0],[0,0,0]]
-        u,v,w = [[1,0,0],[0,1,0],[0,0,1]] #just making the arrows one unit
-        ax.quiver(x,y,z,u,v,w, color = "b") #u,v,w is where the arrows of x y z end
-        max_val = np.max(np.abs(self.rs))
-        ax.set_xlim([-max_val,max_val])
-        ax.set_ylim([-max_val,max_val])
-        ax.set_zlim([-max_val,max_val])
-
-        ax.set_xlabel(["X (km)"])
-        ax.set_ylabel(["Y (km)"])
-        ax.set_zlabel(["Z (km)"])
-
-        ax.set_aspect("equal")
-        ax.set_title(Title)
-
-
-        plt.legend()
-        
-        if show_plot:
-            plt.show()
-        if save_plot:
-            plt.savefig(title+ ".png",dpi = 300)

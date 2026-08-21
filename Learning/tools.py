@@ -11,88 +11,6 @@ import numpy as np
 import pyvista as pv
 from pyvista import examples
 
-
-def plot(rs,labels,show_plot=True,save_plot=False,Title="Multiple Orbits",cb={"radius": 6378.137},gst_deg=0.0):
-    plotter = pv.Plotter()
-
-    # 1. Central Body Setup
-    globe_mesh = examples.planets.load_earth()
-    earth_texture = examples.load_globe_texture()
-
-    # Get max radius of raw globe mesh (bounds are [-1, 1, -1, 1, -1, 1])
-    current_radius = globe_mesh.bounds[1]
-    scale_factor = cb["radius"] / current_radius
-    
-    # Scale Earth to real physical size
-    sphere_with_texture = globe_mesh.scale([scale_factor, scale_factor, scale_factor], inplace=False)
-    sphere_with_texture = sphere_with_texture.rotate_z(180, inplace=False)
-    # Rotate Earth for Greenwich Sidereal Time (GST)
-    if gst_deg != 0.0:
-        sphere_with_texture = sphere_with_texture.rotate_z(gst_deg, inplace=False)
-        
-    plotter.add_mesh(sphere_with_texture,texture=earth_texture,opacity=1.0,label="Central Body",show_edges=False,smooth_shading=True,)
-
-    # 2. Add Test Point at (+X Axis / Vernal Equinox)
-    # Positions 400km above Prime Meridian / Equator
-    test_pt_coords = np.array([[cb["radius"] + 400.0, 0.0, 0.0]])
-    test_pt = pv.PolyData(test_pt_coords)
-    plotter.add_mesh(test_pt,color="yellow",point_size=12,render_points_as_spheres=True,label="Test Pt (+X Axis / Greenwich @ GST=0)",)
-
-    # Track bounds for camera
-    max_val = cb["radius"] * 1.5  # Guarantees full sphere is never clipped
-
-    # 3. Plot Trajectories
-    colors = [
-        "red", "blue", "green", "orange", "yellow", "purple", "brown", "pink",
-        "cyan", "magenta", "lime", "teal", "indigo", "violet", "gold"
-    ]
-
-    for n, r in enumerate(rs):
-        points = np.asarray(r, dtype=np.float64)
-
-        if len(points) > 1:
-            trajectory = pv.MultipleLines(points)
-            plotter.add_mesh(
-                trajectory,
-                color=colors[n % len(colors)],
-                line_width=2.0,
-                label=labels[n] if n < len(labels) else f"Orbit {n+1}",
-            )
-
-        # Start/End points
-        plotter.add_mesh(
-            pv.PolyData(points[0:1]),
-            color="white",
-            point_size=8,
-            render_points_as_spheres=True,
-            label="Initial Position" if n == 0 else None,
-        )
-
-        curr_max = np.max(np.abs(points))
-        if curr_max > max_val:
-            max_val = curr_max
-
-    # 4. Setup Camera & Bounds (Fixes Half-Sphere Clipping)
-    
-    plotter.add_title(Title)
-    
-    # Symmetric bounds ensure full sphere and orbit viewing space
-    plotter.show_grid(
-        xtitle="X (km)",
-        ytitle="Y (km)",
-        ztitle="Z (km)",
-        bounds=[-max_val, max_val, -max_val, max_val, -max_val, max_val],
-    )
-    plotter.reset_camera()  # Recalculates frustum so whole model is visible
-    plotter.add_legend(size=(0.25, 0.25), loc="upper right")
-    
-    if save_plot:
-        plotter.screenshot(f"{Title}.png")
-
-    if show_plot:
-        plotter.show()
-    else:
-        plotter.close()
 def coesToRV(coes, deg = False, mu = pd.earth["mu"]):
     
     if deg:
@@ -148,7 +66,6 @@ def true_anomaly(arr):
     E,e = arr
     return 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E/2))
 
-
 def orbitsPropagate(file, cb):
     rs =[]
     labels = []
@@ -178,7 +95,41 @@ def orbitsPropagate(file, cb):
         op.propagate_orbit()
 
         rs.append(op.rs)  
-        if i == 2:
-            print(rs)
+
         labels.append(line.OBJECT_NAME)
-    plot(rs,labels)
+    
+    myPlot(rs,cb,labels)
+
+
+def myPlot(rs,cb,labels,show_plot=True,save_plot=False,Title="Multiple Orbits"):
+    colors = [
+    "red", "blue", "green", "orange", "yellow", "purple", "brown", "pink",
+    "cyan", "magenta", "lime", "teal", "indigo", "violet", "gold"]
+    earth = examples.planets.load_earth(radius=cb["radius"])
+    earth_texture = examples.load_globe_texture()
+    earth.rotate_y(23.44)
+    pl = pv.Plotter()
+    earth = earth.rotate_z(180)
+    pl.add_mesh(earth,texture=earth_texture)
+
+    
+    k = 0
+    for r in rs:
+        # points = r
+        # spline = pv.Spline(points, 500)
+        # pl.add_mesh(spline, color =colors[k%15], label = labels[k])
+        # k += 1 
+        line_mesh = pv.MultipleLines(r)
+        pl.add_mesh(line_mesh,color =colors[k%15], label = labels[k])
+        k+=1
+
+
+    #to test if i have lind up earth correctly 
+    # null_island = np.array([[cb["radius"] + 400.0, 0.0, 0.0]])
+    # null_island = pv.PolyData(null_island) 
+    # pl.add_mesh(null_island,color="yellow",point_size=12,render_points_as_spheres=True,label="Test Pt (+X Axis / Greenwich @ GST=0)",)
+    legend = pl.add_legend(bcolor='black', border=True, size=(0.2, 0.3))
+    legend.GetPositionCoordinate().SetValue(0.8, 0.70)
+    pl.show_axes()
+    pl.show_bounds(mesh=earth)
+    pl.show()
