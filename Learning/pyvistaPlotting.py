@@ -1,6 +1,8 @@
+import planet_data as pd
 import numpy as np
 import pyvista as pv
 from pyvista import examples
+import tools as tools
 # sphere = pv.Sphere()
 # pl = pv.Plotter(shape = (1,1))
 # pl.subplot(0,0)
@@ -16,31 +18,48 @@ from pyvista import examples
 # pl.show_bounds()
 # pl.show_axes()
 # pl.show()
+cb = pd.earth
+earth = examples.planets.load_earth(radius=cb["radius"])
+earth_texture = examples.load_globe_texture()
 
-earth = pv.Sphere(radius =3, center = (0,0,0), direction = (0,0,1))
-sphere = pv.Sphere(radius =3, center = (0,0,0), direction = (0,0,1))
 
-pl = pv.Plotter(shape = (2,1))
-pl.subplot(0,0)
+pl = pv.Plotter()
+
 pl.show_axes()
 pl.show_bounds()
 
 point = np.array([0,0,3])
-theta = np.linspace(0, 2 * np.pi, 100)
-phi = np.linspace(0, 2 * np.pi, 100)
-x = 3 * np.sin(phi) 
-y = 3 * np.cos(phi) 
-z = np.full_like(phi, 1)
-points = np.column_stack((x, y,z))
-spline = pv.Spline(points, 100)
-pl.add_mesh(spline)
+
+
+
 earth_point = pv.MultiBlock([earth,point])
 earth_point.rotate_y(23.44,inplace=True)
-pl.add_mesh(earth_point)
+pl.add_mesh(earth,texture=earth_texture)
 
-pl.subplot(1,0)
-pl.add_mesh(sphere)
+rs = tools.orbitsPropagate(cb = pd.earth, file = "SpaceStationData.csv")
+r = rs[0]
+rGround  = np.array(r)
+rGround *=.97
+print(rGround)
+zeros = np.zeros((86400,3))
+#line_mesh = pv.MultipleLines(rs)
 pl.add_points(point)
 pl.show_axes()
 pl.show_bounds()
-pl.show()
+
+
+zero_line_mesh = pv.MultipleLines(zeros)
+zero_groundline_mesh = pv.MultipleLines(zeros)
+earth_ground = pv.MultiBlock([earth, zero_groundline_mesh])
+pl.add_mesh(zero_line_mesh, color = "red")
+pl.add_mesh(zero_groundline_mesh, color = "pink")
+pl.open_gif("earth_rotate.gif",fps = 60, iterations = 1)
+frames = 24*60*60
+print(r)
+print(len(r))
+for i in range(frames):
+    earth_ground.rotate_z(0.00417*60, inplace=True)
+    zero_line_mesh.points[i] = r[i*60]
+    zero_groundline_mesh.points[i] = rGround[i*60]
+    pl.write_frame()
+    

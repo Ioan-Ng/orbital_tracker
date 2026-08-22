@@ -98,7 +98,8 @@ def orbitsPropagate(file, cb):
 
         labels.append(line.OBJECT_NAME)
     
-    myPlot(rs,cb,labels)
+    # myPlot(rs,cb,labels)
+    return rs
 
 
 def myPlot(rs,cb,labels,show_plot=True,save_plot=False,Title="Multiple Orbits"):
