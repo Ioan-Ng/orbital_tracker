@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     # r0A = [r_magA*1.1, 0, 0] #initial position
     # v0A = [0,v_magA,0] #initial velocity
-    t_span = (0,2*24*60*60)#seconds
+    t_span = (0,2.36e6)#seconds
 
     # r_magB =cb["radius"]+1000
     # v_magB = np.sqrt(cb["mu"]/r_magB)*1.35
@@ -43,9 +43,14 @@ if __name__ == "__main__":
     # op0 = OP(c0, t_span,coes = True)
     # op0.propagate_orbit()
     # tools.plot([op0.rs], "a")
-    r0 = [1837.4, 0.0, 0.0]
-    v0 = [0.0, 1.633, 0.0]
+    neutron = pd.neutron_star
+    moon = pd.moon
+    r0 = [10000.0, 0.0, 0.0]  # Total distance 10,000 km
+    v0 = [0.0, 6096.7, 0.0]  # km/s
     state0 = r0 + v0
-    op = tb(state0,t_span,5.97e24,7.35e22)
+    t_span = (0, 31)
+
+    op = tb(state0,t_span,2.7846e30,2.7846e30,neutron,neutron)
     op.propagate_orbit()
-    tools.myPlot(op.rs)
+    print(op.rs)
+    tools.plotTwoBody(op.rs,neutron,neutron)

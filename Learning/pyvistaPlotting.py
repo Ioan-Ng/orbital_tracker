@@ -55,8 +55,7 @@ pl.add_mesh(zero_line_mesh, color = "red")
 pl.add_mesh(zero_groundline_mesh, color = "pink")
 pl.open_gif("earth_rotate.gif",fps = 60, iterations = 1)
 frames = 24*60*60
-print(r)
-print(len(r))
+
 for i in range(frames):
     earth_ground.rotate_z(0.00417*60, inplace=True)
     zero_line_mesh.points[i] = r[i*60]

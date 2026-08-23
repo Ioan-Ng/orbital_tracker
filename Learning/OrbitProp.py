@@ -33,6 +33,6 @@ class OrbitPropagator:
         r = np.array([rx,ry,rz])
         r_mag = np.linalg.norm(r)
         ax,ay,az = -r*self.cb['mu']/(r_mag**3)
-        return[vx,vy,vz,ax,ay,az]#
+        return[vx,vy,vz,ax,ay,az]
     
     

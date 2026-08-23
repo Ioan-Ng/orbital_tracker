@@ -135,5 +135,29 @@ def myPlot(rs,cb,labels,show_plot=True,save_plot=False,Title="Multiple Orbits"):
     pl.show_bounds(mesh=earth)
     pl.show()
 
-def plot2body(rs):
-    
+def plotTwoBody(rs,cba,cbb):
+    bodyA = pv.Sphere(radius = 1000,center = (0,0,0))
+    bodyB = pv.Sphere(radius = 1000,center = (0,0,0))
+
+    pl = pv.Plotter()
+
+    actor = pl.add_mesh(bodyB, color = "blue")
+    pl.add_mesh(bodyA, color = "red")
+    zeros = np.zeros((86400,3))
+    zero_line_mesh = pv.MultipleLines(zeros)
+    pl.add_mesh(zero_line_mesh, color = "red")
+    pl.open_gif("two_body.gif", fps = 30)
+
+    pl.show_axes()
+    pl.show_bounds()
+
+    target_frames = 300
+    indices = np.linspace(0, len(rs) - 1, target_frames, dtype = int)
+    frame_data = rs[indices]
+    for pos in frame_data:
+        actor.position = pos
+        pl.write_frame()
+    pl.close()
+
+
+        

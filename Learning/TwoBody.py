@@ -3,13 +3,15 @@ from scipy.integrate import solve_ivp
 import tools as tools 
 
 class TwoBodyPropagator:
-    def __init__(self,state, t_span,ma,mb):
+    def __init__(self,state, t_span,ma,mb,cba,cbb):
         self.r0 = state[:3]
         self.v0 = state[3:]
         self.ma = ma
         self.mb = mb
         self.t_span = t_span
         self.y0 = np.concatenate([self.r0, self.v0])
+        self.cba = cba
+        self.cbb = cbb
 
     def diff_eq(self,t,y):
         G = 6.674e-20
