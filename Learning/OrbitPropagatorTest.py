@@ -6,7 +6,7 @@ import planet_data as pd
 from sys import path
 import tools as tools
 import pyvista as pv
-
+from TwoBody import TwoBodyPropagator as tb
 from OrbitProp import OrbitPropagator as OP
 cb = pd.earth
 
@@ -43,4 +43,9 @@ if __name__ == "__main__":
     # op0 = OP(c0, t_span,coes = True)
     # op0.propagate_orbit()
     # tools.plot([op0.rs], "a")
-    tools.orbitsPropagate("SpaceStationData.csv", cb)
+    r0 = [1837.4, 0.0, 0.0]
+    v0 = [0.0, 1.633, 0.0]
+    state0 = r0 + v0
+    op = tb(state0,t_span,5.97e24,7.35e22)
+    op.propagate_orbit()
+    tools.myPlot(op.rs)

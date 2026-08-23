@@ -134,3 +134,6 @@ def myPlot(rs,cb,labels,show_plot=True,save_plot=False,Title="Multiple Orbits"):
     pl.show_axes()
     pl.show_bounds(mesh=earth)
     pl.show()
+
+def plot2body(rs):
+    
