@@ -54,11 +54,11 @@ earth_ground = pv.MultiBlock([earth, zero_groundline_mesh])
 pl.add_mesh(zero_line_mesh, color = "red")
 pl.add_mesh(zero_groundline_mesh, color = "pink")
 pl.open_gif("earth_rotate.gif",fps = 60, iterations = 1)
-frames = 24*60*60
+frames = 24*60*60*60
 
 for i in range(frames):
-    earth_ground.rotate_z(0.00417*60, inplace=True)
-    zero_line_mesh.points[i] = r[i*60]
-    zero_groundline_mesh.points[i] = rGround[i*60]
+    earth_ground.rotate_z(0.00417, inplace=True)
+    zero_line_mesh.points[i] = r[i]
+    zero_groundline_mesh.points[i] = rGround[i]
     pl.write_frame()
     
