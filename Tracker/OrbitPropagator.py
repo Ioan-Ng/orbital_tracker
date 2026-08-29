@@ -2,14 +2,17 @@ import numpy as np
 from scipy.integrate import solve_ivp
 import Tools as tl
 #Our class where we will parse orbit data, either in keplearian element form or r and v vectors.
+#UNITS
+#everything will be in meters, m
 class Orbit_Propagator():
-    def __init__(self, initial_state, t_span, keplearian_data, central_body):
+    def __init__(self, initial_state, t_span, keplearian_data, central_body,degrees):
+        self.degrees = degrees #if the angles come in degrees we want to change them to radians when converting to vectors
         self.central_body = central_body
         self.mu = self.central_body["mu"]
         self.t_span = t_span #desribes t0 and t_end e.g (0,100)
         #we first want to check if we need to convert our state variables from keplerian to vecotr form
         if keplearian_data:
-            self.r0, self.v0 = tl.kpToVector(self.mu)
+            self.r0, self.v0 = tl.kpToVector(initial_state, self.mu, self.degrees)
         #otherwise we can just keep our parsed data as is
         else:
             self.r0 = initial_state[:3]
