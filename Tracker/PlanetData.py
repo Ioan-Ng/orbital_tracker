@@ -5,6 +5,7 @@ earth = {
     'mu' : 3.986e14, #m^3s^-2
     'radius' : 6378e3, #m
     'tilt' : 23.44, #degrees in relation to its own axis
+    'angular_speed' : 0.00417 #degrees per seoncd
 }
 
 moon = {

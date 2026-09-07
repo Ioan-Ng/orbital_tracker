@@ -23,14 +23,14 @@ for i in range(len(data)):
     periapsis = line.ARG_OF_PERICENTER*d2r
     epoch = line.EPOCH 
     a = (mu/((2*np.pi*mean_motion)/86400)**2)**(1/3)
-    t_span = (0,1*24*60*60)
+  
     
     E = tools.ecc_anomaly(mean_anomaly,eccentricity,ta_check=False)
     trueAnomaly = tools.true_anomaly([E, eccentricity])
     r = a * (1 - eccentricity * np.cos(E))
     
     c  = [a,eccentricity,inc,trueAnomaly,periapsis,raan]
-    orbit = OP(c,t_span = (90*60),keplearian_data = False,central_body = cb, degrees=True,ta_check = True)
+    orbit = OP(c,t_span = (0,90*60),keplearian_data = False,central_body = cb, degrees=True,ta_check = True)
     orbit.propagate_orbit()
     rs =orbit.rs
 

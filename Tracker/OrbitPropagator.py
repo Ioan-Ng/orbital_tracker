@@ -6,6 +6,7 @@ import Tools as tl
 #everything will be in meters, m
 class Orbit_Propagator:
     def __init__(self, initial_state, t_span, keplearian_data, central_body,degrees,ta_check):
+        
         self.ta_check = ta_check #if using true if using true anom but false if we are using mean anom
         self.degrees = degrees #if the angles come in degrees we want to change them to radians when converting to vectors
         self.central_body = central_body
@@ -22,10 +23,10 @@ class Orbit_Propagator:
         #now we must set up our initial y0 for our differntial equation
         self.r0 = np.array(self.r0)
         self.v0 = np.array(self.v0)
-        y0 = self.r0.tolist() +self.v0.tolist()
+        self.y0 = self.r0.tolist() +self.v0.tolist()
 
     def propagate_orbit(self):
-        sol = solve_ivp(self.universal_gravitation_diff_eq,self.t_span,self.y0,method = "RK45",t_eval = np.linspace(self.t_span[0], self.t_span[1],10e4))
+        self.sol = solve_ivp(self.universal_gravitation_diff_eq,self.t_span,self.y0,method = "DOP853",t_eval = np.linspace(int(self.t_span[0]), int(self.t_span[1]),100000))
         #get the numerical results from the differnetial equation
         
         #make them into vector form for pyvista plotting
@@ -34,7 +35,7 @@ class Orbit_Propagator:
         self.zs = self.sol.y[2]
 
         self.rs = np.vstack((self.xs,self.ys,self.zs)).T
-    def universal_gravitation_diff_eq(self, current_state,t):
+    def universal_gravitation_diff_eq(self,t,current_state):
         rx,ry,rz,vx,vy,vz = current_state
 
         #get the position vector r, we will dentoe the underline as r_
@@ -42,7 +43,7 @@ class Orbit_Propagator:
         r_norm = np.linalg.norm(r_)
 
         #governing equation
-        ax,ay,az = -self.mu*r_*(r_norm**3)
+        ax,ay,az = -self.mu*r_/(r_norm**3)
 
         return[vx,vy,vz,ax,ay,az]
 
