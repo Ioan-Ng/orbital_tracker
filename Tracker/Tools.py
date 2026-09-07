@@ -1,5 +1,9 @@
 import numpy as np
 import math as m
+import pyvista as pv
+from pyvista import examples
+
+import pandas as pds
 
 #main fucntion to convert our state elemetns into vecotrs
 def kpToVector(intial_state,mu, degrees, ta_check):
@@ -65,3 +69,36 @@ def eci_t0_perif(raan, aop, i):
 def true_anomaly(arr):
     E,e = arr
     return 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E/2))
+
+
+def animate_plot(rs, t_span, central_body):
+    time = t_span[1]
+    tilt = central_body["tilt"]
+    frames = time/30 #we want one frame for each half a minute ie 30seconds
+    #since rs is an array with the 2d array of values inside, idk why lol and make plotter
+    pl = pv.Plotter()
+    #rotate according to the planet's tilt
+    sphere = pv.Sphere(radius = central_body["radius"])
+    sphere.rotate_y(tilt,inplace=True)
+    r = rs[0]
+
+    #make the ground trakcs
+    rGround  = np.array(r)
+    rGround *=.97
+
+    zeros = np.zeros((t_span[1],3))
+    
+    pl.show_axes()
+    pl.show_bounds()
+
+    zero_line_mesh = pv.MultipleLines(zeros)
+    zero_groundline_mesh = pv.MultipleLines(zeros)
+    sphere_ground = pv.MultiBlock([sphere, zero_groundline_mesh])
+    pl.add_mesh(zero_line_mesh, color = "red")
+    pl.add_mesh(zero_groundline_mesh, color = "pink")
+    pl.open_gif("planet.gif",fps = 60, iterations = 1)
+    for i in range(frames):
+        sphere_ground.rotate_z(0.00417*30, inplace=True)
+        zero_line_mesh.points[i] = r[i]
+        zero_groundline_mesh.points[i] = rGround[i]
+        pl.write_frame()
